@@ -228,36 +228,37 @@ h1 {
 }
 
 .login-card {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(30px) saturate(150%);
-    -webkit-backdrop-filter: blur(30px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 50px 40px;
-    border-radius: 32px;
+    /* Mismo estilo exacto que las tarjetas de agenda */
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    padding: 30px;
+    border-radius: 20px;
     width: 90%;
-    max-width: 420px;
-    text-align: center;
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 20px 40px -1px rgba(0, 0, 0, 0.4),
-        inset 0 0 20px rgba(255, 255, 255, 0.05);
-    animation: contentReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 400px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out both;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
-.login-icon {
-    font-size: 3rem;
-    margin-bottom: 20px;
-    display: block;
+/* Acento lateral exactamente igual que .card::before */
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
 }
 
 .login-card h2 {
-    font-size: 2.2rem;
+    font-size: 1.4rem;
     font-weight: 800;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
+    margin-bottom: 5px;
+    color: white;
 }
 
 .login-card p.login-subtitle {
