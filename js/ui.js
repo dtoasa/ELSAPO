@@ -20,39 +20,43 @@ async function loadData(filterDates) {
 
         let data = await response.json();
 
-        // Filtrar por fechas si hay días seleccionados
+        // Filtrar por fechas si hay días seleccionados en el calendario
         if (filterDates && filterDates.length > 0) {
+
+            // Convertir claves del calendario "YYYY-MM-DD" a objetos {dia, mes, anio}
+            const selSet = filterDates.map(fd => {
+                const parts = fd.split('-');
+                return { anio: parseInt(parts[0]), mes: parseInt(parts[1]), dia: parseInt(parts[2]) };
+            });
+
             data = data.filter(item => {
                 if (!item.fecha) return false;
-                // Intentar comparar el día y mes del item con cada fecha seleccionada
-                return filterDates.some(fd => {
-                    // fd es "YYYY-MM-DD", ej: "2026-02-24"
-                    const [fy, fm, fday] = fd.split('-');
-                    const fechaStr = item.fecha;
-                    // Aceptar formatos: DD/MM/YYYY, DD-MM-YYYY, DD/MM o texto con el día
-                    return (
-                        fechaStr.includes(fday + '/' + fm) ||
-                        fechaStr.includes(fday + '-' + fm) ||
-                        fechaStr.startsWith(fday + '/' + fm) ||
-                        fechaStr === fd
-                    );
-                });
+                // La fecha en el JSON puede ser "DD/MM/YYYY", "DD-MM-YYYY", o similar
+                // Extraemos todos los números que encontremos
+                const nums = item.fecha.match(/\d+/g);
+                if (!nums || nums.length < 2) return false;
+                // Asumimos formato DD/MM/YYYY → nums[0]=dia, nums[1]=mes, nums[2]=año
+                const itemDia = parseInt(nums[0]);
+                const itemMes = parseInt(nums[1]);
+                const itemAnio = nums[2] ? parseInt(nums[2]) : null;
+
+                return selSet.some(s =>
+                    s.dia === itemDia && s.mes === itemMes &&
+                    (itemAnio === null || s.anio === itemAnio)
+                );
             });
 
             if (data.length === 0) {
                 showEmptyState(
                     '📭 Sin actividades en esas fechas',
-                    'No se encontraron tareas para los días seleccionados. Recuerda ejecutar el scraper para obtener datos reales de Edukar360.'
+                    'No hay tareas registradas para los días seleccionados.'
                 );
                 return;
             }
         }
 
         if (data.length === 0) {
-            showEmptyState(
-                '📭 Agenda vacía',
-                'El scraper aún no ha traído datos reales. Ejecuta <code>node js/scraper.js</code> para sincronizar la agenda de Edukar360.'
-            );
+            showEmptyState('📭 Agenda vacía', 'Ejecuta el scraper para cargar la agenda real de Edukar360.');
             return;
         }
 
