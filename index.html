@@ -49,9 +49,9 @@
             <!-- Mini Calendario -->
             <div class="calendar-widget">
                 <div class="cal-header">
-                    <button id="cal-prev" class="cal-nav">‹</button>
-                    <span id="cal-month-label"></span>
-                    <button id="cal-next" class="cal-nav">›</button>
+                    <button id="cal-prev" class="cal-nav" type="button">&#8249;</button>
+                    <strong id="cal-month-label">cargando...</strong>
+                    <button id="cal-next" class="cal-nav" type="button">&#8250;</button>
                 </div>
                 <div class="cal-weekdays">
                     <span>Lu</span><span>Ma</span><span>Mi</span>
@@ -62,8 +62,8 @@
                     <span id="selected-dates-label">Ningún día seleccionado</span>
                 </div>
             </div>
-            <button class="btn-refresh" id="btn-scrape" onclick="loadDataForDates()">
-                🔄 Actualizar Vista
+            <button class="btn-refresh" type="button" onclick="loadDataForDates()">
+                &#128260; Actualizar Vista
             </button>
         </div>
 
