@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><title>Test Hash</title></head>
+<body style="background:#111;color:#fff;font-family:monospace;padding:40px;">
+<h2>Test de Hashes</h2>
+<p>Escribe tu usuario y contraseña para ver sus hashes:</p>
+<input id="u" placeholder="Usuario" style="padding:10px;width:400px;font-size:16px;"><br><br>
+<input id="p" placeholder="Contraseña" style="padding:10px;width:400px;font-size:16px;"><br><br>
+<button onclick="testHash()" style="padding:10px 20px;font-size:16px;">Calcular Hash</button>
+<pre id="result" style="margin-top:20px;color:#0f0;"></pre>
+<script>
+async function sha256(text) {
+    var encoder = new TextEncoder();
+    var data = encoder.encode(text);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function(b){return b.toString(16).padStart(2,'0')}).join('');
+}
+async function testHash() {
+    var u = document.getElementById('u').value;
+    var p = document.getElementById('p').value;
+    var uh = await sha256(u);
+    var ph = await sha256(p);
+    var expectedUser = '4521a228cc6f2c27fa4995c33342bde6711a8dfc3b76ed44f8bef126fec8a1ac';
+    var expectedPass = '6068a1426a2072cae53af2a54c3b06d35d2a009fc67c17159b390d76853b6566';
+    var r = '';
+    r += 'Usuario ingresado: [' + u + '] (largo: ' + u.length + ')\n';
+    r += 'Hash generado:     ' + uh + '\n';
+    r += 'Hash esperado:     ' + expectedUser + '\n';
+    r += 'Coincide usuario:  ' + (uh === expectedUser ? '? SI' : '? NO') + '\n\n';
+    r += 'Contraseña ingresada: [' + p + '] (largo: ' + p.length + ')\n';
+    r += 'Hash generado:     ' + ph + '\n';
+    r += 'Hash esperado:     ' + expectedPass + '\n';
+    r += 'Coincide clave:    ' + (ph === expectedPass ? '? SI' : '? NO') + '\n';
+    document.getElementById('result').textContent = r;
+}
+</script>
+</body></html>
