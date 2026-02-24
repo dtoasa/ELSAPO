@@ -62,22 +62,102 @@ function showEmptyState(title, message = '') {
     `;
 }
 
-// Manejo del Login y Carga Inicial
+// ── Mini Calendario ──
+let calDate = new Date();
+let selectedDays = new Set();
+
+function renderCalendar() {
+    const grid = document.getElementById('cal-grid');
+    const label = document.getElementById('cal-month-label');
+    if (!grid || !label) return;
+
+    const year = calDate.getFullYear();
+    const month = calDate.getMonth();
+    const today = new Date();
+
+    label.textContent = calDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const offset = (firstDay === 0) ? 6 : firstDay - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    grid.innerHTML = '';
+
+    for (let i = 0; i < offset; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'cal-day empty';
+        grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day';
+        cell.textContent = d;
+
+        const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (selectedDays.has(key)) cell.classList.add('selected');
+        if (today.getDate() === d && today.getMonth() === month && today.getFullYear() === year) {
+            cell.classList.add('today');
+        }
+
+        cell.addEventListener('click', () => {
+            if (selectedDays.has(key)) {
+                selectedDays.delete(key);
+                cell.classList.remove('selected');
+            } else {
+                selectedDays.add(key);
+                cell.classList.add('selected');
+            }
+            updateSelectedLabel();
+        });
+
+        grid.appendChild(cell);
+    }
+    updateSelectedLabel();
+}
+
+function updateSelectedLabel() {
+    const label = document.getElementById('selected-dates-label');
+    if (!label) return;
+    if (selectedDays.size === 0) {
+        label.textContent = 'Ningún día seleccionado';
+    } else {
+        label.textContent = `📅 ${selectedDays.size} día(s) seleccionado(s)`;
+    }
+}
+
+function loadDataForDates() {
+    if (selectedDays.size === 0) {
+        loadData();
+    } else {
+        loadData([...selectedDays]);
+    }
+}
+
+// ── Login + Init ──
 document.addEventListener('DOMContentLoaded', () => {
+    renderCalendar();
+
+    document.getElementById('cal-prev')?.addEventListener('click', () => {
+        calDate.setMonth(calDate.getMonth() - 1);
+        renderCalendar();
+    });
+    document.getElementById('cal-next')?.addEventListener('click', () => {
+        calDate.setMonth(calDate.getMonth() + 1);
+        renderCalendar();
+    });
+
     const loginForm = document.getElementById('login-form');
     const loginOverlay = document.getElementById('login-overlay');
 
     if (loginForm) {
         loginForm.onsubmit = (e) => {
             e.preventDefault();
-
-            // Simulación de validación
             const user = document.getElementById('student-user').value;
             const pass = document.getElementById('student-pass').value;
-
             if (user && pass) {
                 loginOverlay.classList.add('hidden');
-                loadData(); // Cargar la agenda una vez "autenticado"
+                loadData();
             }
         };
     }

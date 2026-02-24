@@ -17,11 +17,11 @@
 
     <!-- Login Overlay -->
     <div id="login-overlay" class="login-overlay">
-        <div class="login-card">
+        <div class="card"
+            style="--cat-color: var(--primary); width:90%; max-width:380px; animation: fadeInUp 0.6s ease-out both;">
             <span class="badge" style="--cat-color: var(--primary)">PORTAL ESTUDIANTE</span>
-            <h2>Agenda Académica</h2>
-            <p class="login-subtitle">Acceso seguro al portal académico</p>
-            <form id="login-form">
+            <div class="card-resumen">Agenda Académica Edukar360</div>
+            <form id="login-form" style="margin-top: 18px;">
                 <div class="input-group">
                     <label for="student-user">Usuario Edukar360</label>
                     <input type="text" id="student-user" placeholder="DNI o Código" required>
@@ -32,7 +32,10 @@
                 </div>
                 <button type="submit" class="btn-login">Ingresar a la Agenda</button>
             </form>
-            <p class="login-footer-text">Acceso seguro al portal académico</p>
+            <div class="card-footer" style="margin-top: 18px;">
+                <span>🔒 Acceso seguro al portal académico</span>
+                <span># Edukar360</span>
+            </div>
         </div>
     </div>
 
@@ -43,7 +46,25 @@
         </header>
 
         <div class="controls">
-            <button class="btn-refresh" onclick="loadData()">Actualizar Vista</button>
+            <!-- Mini Calendario -->
+            <div class="calendar-widget">
+                <div class="cal-header">
+                    <button id="cal-prev" class="cal-nav">‹</button>
+                    <span id="cal-month-label"></span>
+                    <button id="cal-next" class="cal-nav">›</button>
+                </div>
+                <div class="cal-weekdays">
+                    <span>Lu</span><span>Ma</span><span>Mi</span>
+                    <span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+                </div>
+                <div id="cal-grid" class="cal-grid"></div>
+                <div class="cal-selected-info">
+                    <span id="selected-dates-label">Ningún día seleccionado</span>
+                </div>
+            </div>
+            <button class="btn-refresh" id="btn-scrape" onclick="loadDataForDates()">
+                🔄 Actualizar Vista
+            </button>
         </div>
 
         <div id="agenda-grid" class="grid">
