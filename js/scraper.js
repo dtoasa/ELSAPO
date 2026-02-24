@@ -7,34 +7,12 @@ require('dotenv').config({ path: path.join(__dirname, '..', 'CL', '.env') });
 /**
  * Función para solicitar entrada por consola
  */
-function askQuestion(query, silent = false) {
+function askQuestion(query) {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
     });
-
     return new Promise(resolve => {
-        if (silent) {
-            // Truco para ocultar la contraseña en la terminal
-            process.stdout.write(query);
-            const stdin = process.openStdin();
-            process.stdin.on('data', char => {
-                char = char + '';
-                switch (char) {
-                    case '\n':
-                    case '\r':
-                    case '\u0004':
-                        stdin.pause();
-                        break;
-                    default:
-                        process.stdout.clearLine();
-                        readline.cursorTo(process.stdout, 0);
-                        process.stdout.write(query + Array(rl.line.length + 1).join('*'));
-                        break;
-                }
-            });
-        }
-
         rl.question(query, answer => {
             rl.close();
             resolve(answer);
@@ -43,20 +21,36 @@ function askQuestion(query, silent = false) {
 }
 
 /**
- * Edukar360 Agenda Scraper
+ * Edukar360 Agenda Scraper (Padres y Estudiantes)
  */
 async function runScraper() {
     console.log('🚀 Iniciando Scraper de Edukar360...');
 
-    // 0. Obtener Credenciales de forma interactiva
-    let user = process.env.USER_EDUKAR;
-    if (!user || user === 'your_username') {
-        user = await askQuestion('👤 Ingrese su usuario de Edukar360: ');
+    // 1. Seleccionar Portal
+    console.log('\n--- SELECCIÓN DE PORTAL ---');
+    console.log('1. Portal de Padres (portalpad)');
+    console.log('2. Portal de Estudiantes (portalestu)');
+    const choice = await askQuestion('\nSeleccione una opción (1 o 2): ');
+
+    let loginUrl, userEnv;
+    if (choice === '2') {
+        loginUrl = 'https://novus.edukar360.com/extranet/portalestu/login';
+        userEnv = process.env.USER_ALUMNO;
+        console.log('🎓 Modo: Estudiante seleccionado.');
+    } else {
+        loginUrl = 'https://novus.edukar360.com/extranet/portalpad/login';
+        userEnv = process.env.USER_PADRE;
+        console.log('👨‍👩‍👧 Modo: Padre seleccionado.');
+    }
+
+    // 2. Obtener Credenciales
+    let user = userEnv;
+    if (!user || user.includes('tu_usuario')) {
+        user = await askQuestion('👤 Ingrese su usuario (DNI o Código): ');
     } else {
         console.log(`👤 Usando usuario: ${user}`);
     }
 
-    // Siempre pedir la contraseña y no guardarla
     const pass = await askQuestion('🔑 Ingrese su contraseña: ');
 
     if (!user || !pass) {
@@ -73,8 +67,8 @@ async function runScraper() {
     const page = await browser.newPage();
 
     try {
-        console.log('🔗 Navegando a la página de login...');
-        await page.goto('https://novus.edukar360.com/extranet/portalpad/login', {
+        console.log(`🔗 Navegando a: ${loginUrl}`);
+        await page.goto(loginUrl, {
             waitUntil: 'networkidle2',
             timeout: 60000
         });
@@ -96,24 +90,32 @@ async function runScraper() {
 
         console.log('✅ Login exitoso.');
 
-        console.log('📅 Buscando sección de Agenda...');
+        // 3. Navegar a la Agenda
+        console.log('📅 Buscando sección de Agenda/Tareas...');
         const agendaLink = await page.evaluate(() => {
             const links = Array.from(document.querySelectorAll('a'));
-            return links.find(l => l.innerText.toLowerCase().includes('agenda'))?.href;
+            // Busca 'agenda' o 'tareas' que son comunes en ambos portales
+            return links.find(l => {
+                const text = l.innerText.toLowerCase();
+                return text.includes('agenda') || text.includes('tarea');
+            })?.href;
         });
 
         if (agendaLink) {
+            console.log(`🔗 Redirigiendo a: ${agendaLink}`);
             await page.goto(agendaLink, { waitUntil: 'networkidle2' });
         } else {
-            console.log('⚠️ No se encontró link directo a "Agenda", buscando en el menú...');
+            console.log('⚠️ No se encontró link directo, explorando página principal...');
         }
 
-        // Función para extraer datos de la página actual
+        // 4. Extracción de Datos (Función Modular)
         async function extractTableData() {
             return await page.evaluate(() => {
                 const items = [];
                 const categories = ['tarea', 'agenda', 'deberes', 'lecciones', 'examen', 'aporte', 'taller', 'proyecto'];
-                const rows = document.querySelectorAll('tr, .agenda-item, .card, .list-group-item, .event-container');
+                // Selectores amplios para capturar en ambos portales
+                const selectors = 'tr, .agenda-item, .card, .list-group-item, .event-container, .tarea-item';
+                const rows = document.querySelectorAll(selectors);
                 const dateRegex = /(\d{1,2})[\/\- ]?(\d{1,2}|ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[\/\- ]?(\d{2,4})?/i;
 
                 rows.forEach(row => {
@@ -141,11 +143,14 @@ async function runScraper() {
 
         let allAgendaData = await extractTableData();
 
-        // 5. Intentar navegar a días/meses futuros si existe un botón de "Siguiente" o "Próximo"
-        console.log('⏭️ Buscando controles para fechas futuras...');
+        // 5. Navegación a Futuro
+        console.log('⏭️ Buscando fechas futuras...');
         const hasNextButton = await page.evaluate(() => {
             const btn = Array.from(document.querySelectorAll('button, a, .fc-next-button'))
-                .find(el => el.innerText.toLowerCase().includes('sig') || el.classList.contains('fc-next-button'));
+                .find(el => {
+                    const t = el.innerText.toLowerCase();
+                    return t.includes('sig') || el.classList.contains('fc-next-button');
+                });
             if (btn) {
                 btn.click();
                 return true;
@@ -154,32 +159,31 @@ async function runScraper() {
         });
 
         if (hasNextButton) {
-            console.log('⏳ Cargando mes/semana siguiente...');
-            await new Promise(r => setTimeout(r, 3000)); // Esperar carga
+            console.log('⏳ Cargando periodo siguiente...');
+            await new Promise(r => setTimeout(r, 3000));
             const futureData = await extractTableData();
             allAgendaData = [...allAgendaData, ...futureData];
-            console.log(`➕ Se agregaron ${futureData.length} elementos de fechas futuras.`);
+            console.log(`➕ Se agregaron ${futureData.length} elementos adicionales.`);
         }
 
-        console.log(`📊 Total recolectado: ${allAgendaData.length} elementos.`);
-
+        // 6. Guardar Resultados
         const projectRoot = path.join(__dirname, '..');
         const jsonDir = path.join(projectRoot, 'json');
         if (!fs.existsSync(jsonDir)) fs.mkdirSync(jsonDir);
 
         const outputPath = path.join(jsonDir, 'agenda_resultado.json');
         fs.writeFileSync(outputPath, JSON.stringify(allAgendaData, null, 2));
-        console.log(`💾 Resultados guardados en: ${outputPath}`);
-
-        console.table(allAgendaData.map(i => ({ Categoria: i.categoria, Resumen: i.resumen.substring(0, 50) })));
+        console.log(`\n💾 Resultados guardados en: ${outputPath}`);
+        console.table(allAgendaData.map(i => ({ Categoria: i.categoria, Resumen: i.resumen.substring(0, 40) })));
 
     } catch (error) {
-        console.error('❌ Error durante el proceso:', error.message);
-        await page.screenshot({ path: 'error_screenshot.png' });
-        console.log('📸 Screenshot del error guardada como error_screenshot.png');
+        console.error('❌ Error:', error.message);
+        const screenshotPath = path.join(__dirname, '..', 'error_screenshot.png');
+        await page.screenshot({ path: screenshotPath });
+        console.log(`📸 Screenshot del error en: ${screenshotPath}`);
     } finally {
-        console.log('🏁 Cerrando navegador.');
         await browser.close();
+        console.log('🏁 Proceso finalizado.');
     }
 }
 

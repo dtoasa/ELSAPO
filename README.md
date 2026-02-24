@@ -20,17 +20,19 @@ Este es un scraper automatizado diseñado para extraer información académica d
 
 ## 🛠️ Configuración
 1. Edita el archivo `.env` dentro de la carpeta **`CL/`**.
-2. Ingresa solo tu **usuario**:
+2. Ingresa tus usuarios (opcional):
    ```env
-   USER_EDUKAR=tu_usuario
+   USER_PADRE=tu_usuario_dni
+   USER_ALUMNO=tu_usuario_estudiante
    ```
-   *Nota: Por seguridad, la contraseña NO se guarda. El script te la pedirá cada vez que lo inicies.*
+   *Nota: Por seguridad, las contraseñas NO se guardan. El script te las pedirá según el portal que elijas.*
 
 ## 🏃‍♂️ Ejecución
 Para iniciar el scraping, ejecuta desde la raíz:
 ```bash
 node js/scraper.js
 ```
+El script te preguntará si deseas ingresar al portal de **Padres** o de **Estudiantes**.
 
 ## 📂 Salida
 Los datos se guardarán en `json/agenda_resultado.json`.
