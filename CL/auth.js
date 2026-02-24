@@ -1,3 +1,4 @@
-// Credenciales locales - NO se sube a GitHub
-var authUser = 'm.toasa@centroeducativonovus.edu.ec';
-var authPass = '091942384855';
+// Credenciales locales - Reemplaza con tus datos reales
+// NUNCA subas este archivo con credenciales reales a GitHub
+var authUser = 'TU_CORREO@ejemplo.com';
+var authPass = 'TU_CONTRASEÑA';

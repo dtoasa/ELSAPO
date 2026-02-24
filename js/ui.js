@@ -172,15 +172,39 @@ document.addEventListener('DOMContentLoaded', function () {
     var loginAttempts = 0;
     var maxAttempts = 5;
 
+    // Verificar que las credenciales estén cargadas desde CL/auth.js
+    var credentialsLoaded = (typeof authUser !== 'undefined' && authUser !== '' &&
+        typeof authPass !== 'undefined' && authPass !== '');
+
     if (loginForm) {
-        // Crear elemento de error si no existe
+        // Crear elemento de error
         var errorMsg = document.createElement('div');
         errorMsg.id = 'login-error';
         errorMsg.style.cssText = 'color:#f43f5e;font-size:0.85rem;text-align:center;margin-top:12px;min-height:20px;transition:opacity 0.3s;opacity:0;';
         loginForm.appendChild(errorMsg);
 
+        // Si no se cargaron las credenciales, bloquear el login completamente
+        if (!credentialsLoaded) {
+            errorMsg.textContent = '⚠️ Archivo de credenciales no disponible. Contacte al administrador.';
+            errorMsg.style.opacity = '1';
+            var btnLogin = loginForm.querySelector('.btn-login');
+            if (btnLogin) {
+                btnLogin.disabled = true;
+                btnLogin.style.opacity = '0.5';
+                btnLogin.style.cursor = 'not-allowed';
+                btnLogin.textContent = '🔒 Acceso no disponible';
+            }
+        }
+
         loginForm.onsubmit = function (e) {
             e.preventDefault();
+
+            // Bloquear si no hay credenciales cargadas
+            if (!credentialsLoaded) {
+                errorMsg.textContent = '⚠️ No se pueden verificar las credenciales. Acceso denegado.';
+                errorMsg.style.opacity = '1';
+                return;
+            }
 
             // Verificar si está bloqueado por intentos
             if (loginAttempts >= maxAttempts) {
@@ -199,10 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Validar contra las credenciales de CL/auth.js
-            var validUser = (typeof authUser !== 'undefined') ? authUser : '';
-            var validPass = (typeof authPass !== 'undefined') ? authPass : '';
-
-            if (user === validUser && pass === validPass) {
+            if (user === authUser && pass === authPass) {
                 // ✅ Login exitoso
                 errorMsg.style.opacity = '0';
                 loginOverlay.classList.add('hidden');
