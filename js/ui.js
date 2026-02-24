@@ -12,21 +12,47 @@ const categoryColors = {
 // ── Cargar y mostrar datos ──
 async function loadData(filterDates) {
     const grid = document.getElementById('agenda-grid');
+    grid.innerHTML = '<div class="empty-state"><h2>⏳ Cargando...</h2></div>';
+
     try {
         const response = await fetch('json/agenda_resultado.json');
-        if (!response.ok) throw new Error('No se encontró el archivo de datos.');
+        if (!response.ok) throw new Error('Archivo no encontrado.');
 
         let data = await response.json();
 
-        // Filtrar por fechas seleccionadas si las hay
+        // Filtrar por fechas si hay días seleccionados
         if (filterDates && filterDates.length > 0) {
             data = data.filter(item => {
-                return filterDates.some(fd => item.fecha && item.fecha.includes(fd.slice(8))); // compara el día
+                if (!item.fecha) return false;
+                // Intentar comparar el día y mes del item con cada fecha seleccionada
+                return filterDates.some(fd => {
+                    // fd es "YYYY-MM-DD", ej: "2026-02-24"
+                    const [fy, fm, fday] = fd.split('-');
+                    const fechaStr = item.fecha;
+                    // Aceptar formatos: DD/MM/YYYY, DD-MM-YYYY, DD/MM o texto con el día
+                    return (
+                        fechaStr.includes(fday + '/' + fm) ||
+                        fechaStr.includes(fday + '-' + fm) ||
+                        fechaStr.startsWith(fday + '/' + fm) ||
+                        fechaStr === fd
+                    );
+                });
             });
+
+            if (data.length === 0) {
+                showEmptyState(
+                    '📭 Sin actividades en esas fechas',
+                    'No se encontraron tareas para los días seleccionados. Recuerda ejecutar el scraper para obtener datos reales de Edukar360.'
+                );
+                return;
+            }
         }
 
         if (data.length === 0) {
-            showEmptyState('No hay actividades para las fechas seleccionadas');
+            showEmptyState(
+                '📭 Agenda vacía',
+                'El scraper aún no ha traído datos reales. Ejecuta <code>node js/scraper.js</code> para sincronizar la agenda de Edukar360.'
+            );
             return;
         }
 
