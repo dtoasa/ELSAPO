@@ -62,5 +62,23 @@ function showEmptyState(title, message = '') {
     `;
 }
 
-// Cargar al iniciar
-document.addEventListener('DOMContentLoaded', loadData);
+// Manejo del Login y Carga Inicial
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('login-form');
+    const loginOverlay = document.getElementById('login-overlay');
+
+    if (loginForm) {
+        loginForm.onsubmit = (e) => {
+            e.preventDefault();
+
+            // Simulación de validación
+            const user = document.getElementById('student-user').value;
+            const pass = document.getElementById('student-pass').value;
+
+            if (user && pass) {
+                loginOverlay.classList.add('hidden');
+                loadData(); // Cargar la agenda una vez "autenticado"
+            }
+        };
+    }
+});
