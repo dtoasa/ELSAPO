@@ -26,35 +26,47 @@ function askQuestion(query) {
 async function runScraper() {
     console.log('🚀 Iniciando Scraper de Edukar360...');
 
-    // 1. Seleccionar Portal
-    console.log('\n--- SELECCIÓN DE PORTAL ---');
-    console.log('1. Portal de Padres (portalpad)');
-    console.log('2. Portal de Estudiantes (portalestu)');
-    const choice = await askQuestion('\nSeleccione una opción (1 o 2): ');
+    // Detectar entorno de GitHub Actions o CI
+    const isAutomated = process.env.GITHUB_ACTIONS === 'true' || process.env.CI === 'true';
 
-    let loginUrl, userEnv;
+    // 1. Seleccionar Portal
+    let choice = process.env.SCRAPE_MODE; // '1' para padre, '2' para alumno
+    if (!isAutomated && !choice) {
+        console.log('\n--- SELECCIÓN DE PORTAL ---');
+        console.log('1. Portal de Padres (portalpad)');
+        console.log('2. Portal de Estudiantes (portalestu)');
+        choice = await askQuestion('\nSeleccione una opción (1 o 2): ');
+    } else if (!choice) {
+        choice = '2'; // Por defecto alumno en automatización si no se especifica
+    }
+
+    let loginUrl, userEnv, passEnv;
     if (choice === '2') {
         loginUrl = 'https://novus.edukar360.com/extranet/portalestu/login';
         userEnv = process.env.USER_ALUMNO;
+        passEnv = process.env.PASS_ALUMNO;
         console.log('🎓 Modo: Estudiante seleccionado.');
     } else {
         loginUrl = 'https://novus.edukar360.com/extranet/portalpad/login';
         userEnv = process.env.USER_PADRE;
+        passEnv = process.env.PASS_PADRE;
         console.log('👨‍👩‍👧 Modo: Padre seleccionado.');
     }
 
     // 2. Obtener Credenciales
     let user = userEnv;
-    if (!user || user.includes('tu_usuario')) {
+    if (!isAutomated && (!user || user.includes('tu_usuario'))) {
         user = await askQuestion('👤 Ingrese su usuario (DNI o Código): ');
-    } else {
-        console.log(`👤 Usando usuario: ${user}`);
     }
 
-    const pass = await askQuestion('🔑 Ingrese su contraseña: ');
+    let pass = passEnv;
+    if (!isAutomated && !pass) {
+        pass = await askQuestion('🔑 Ingrese su contraseña: ');
+    }
 
     if (!user || !pass) {
         console.error('❌ Error: Usuario y contraseña son obligatorios.');
+        if (isAutomated) console.error('Asegúrese de configurar USER_ALUMNO/PASS_ALUMNO en GitHub Secrets.');
         process.exit(1);
     }
 
