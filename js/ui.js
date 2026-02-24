@@ -172,9 +172,18 @@ document.addEventListener('DOMContentLoaded', function () {
     var loginAttempts = 0;
     var maxAttempts = 5;
 
-    // Verificar que las credenciales estén cargadas desde CL/auth.js
-    var credentialsLoaded = (typeof authUser !== 'undefined' && authUser !== '' &&
-        typeof authPass !== 'undefined' && authPass !== '');
+    // Verificar que los hashes de credenciales estén cargados desde CL/auth.js
+    var credentialsLoaded = (typeof authUserHash !== 'undefined' && authUserHash !== '' &&
+        typeof authPassHash !== 'undefined' && authPassHash !== '');
+
+    // Función para generar SHA-256 hash en el navegador
+    async function sha256(text) {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(text);
+        var hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        var hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
 
     if (loginForm) {
         // Crear elemento de error
@@ -183,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
         errorMsg.style.cssText = 'color:#f43f5e;font-size:0.85rem;text-align:center;margin-top:12px;min-height:20px;transition:opacity 0.3s;opacity:0;';
         loginForm.appendChild(errorMsg);
 
-        // Si no se cargaron las credenciales, bloquear el login completamente
+        // Si no se cargaron las credenciales, bloquear el login
         if (!credentialsLoaded) {
             errorMsg.textContent = '⚠️ Archivo de credenciales no disponible. Contacte al administrador.';
             errorMsg.style.opacity = '1';
@@ -196,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        loginForm.onsubmit = function (e) {
+        loginForm.onsubmit = async function (e) {
             e.preventDefault();
 
             // Bloquear si no hay credenciales cargadas
@@ -222,8 +231,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // Validar contra las credenciales de CL/auth.js
-            if (user === authUser && pass === authPass) {
+            // Generar hashes de lo que escribió el usuario
+            var userHash = await sha256(user);
+            var passHash = await sha256(pass);
+
+            // Comparar hashes (las credenciales reales NUNCA están en el código)
+            if (userHash === authUserHash && passHash === authPassHash) {
                 // ✅ Login exitoso
                 errorMsg.style.opacity = '0';
                 loginOverlay.classList.add('hidden');
