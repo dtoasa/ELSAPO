@@ -1,4 +1,4 @@
-const categoryColors = {
+var categoryColors = {
     'TAREA': '#fbbf24',
     'AGENDA': '#60a5fa',
     'DEBERES': '#60a5fa',
@@ -10,104 +10,86 @@ const categoryColors = {
 };
 
 // ── Cargar y mostrar datos ──
-async function loadData(filterDates) {
-    const grid = document.getElementById('agenda-grid');
-    grid.innerHTML = '<div class="empty-state"><h2>⏳ Cargando...</h2></div>';
+function loadData(filterDates) {
+    var grid = document.getElementById('agenda-grid');
+    if (!grid) return;
 
-    try {
-        const response = await fetch('json/agenda_resultado.json');
-        if (!response.ok) throw new Error('Archivo no encontrado.');
+    // Leer datos de la variable global (cargada desde json/agenda_data.js)
+    var data = typeof agendaData !== 'undefined' ? agendaData.slice() : [];
 
-        let data = await response.json();
-
-        // Filtrar por fechas si hay días seleccionados en el calendario
-        if (filterDates && filterDates.length > 0) {
-
-            // Convertir claves del calendario "YYYY-MM-DD" a objetos {dia, mes, anio}
-            const selSet = filterDates.map(fd => {
-                const parts = fd.split('-');
-                return { anio: parseInt(parts[0]), mes: parseInt(parts[1]), dia: parseInt(parts[2]) };
-            });
-
-            data = data.filter(item => {
-                if (!item.fecha) return false;
-                // La fecha en el JSON puede ser "DD/MM/YYYY", "DD-MM-YYYY", o similar
-                // Extraemos todos los números que encontremos
-                const nums = item.fecha.match(/\d+/g);
-                if (!nums || nums.length < 2) return false;
-                // Asumimos formato DD/MM/YYYY → nums[0]=dia, nums[1]=mes, nums[2]=año
-                const itemDia = parseInt(nums[0]);
-                const itemMes = parseInt(nums[1]);
-                const itemAnio = nums[2] ? parseInt(nums[2]) : null;
-
-                return selSet.some(s =>
-                    s.dia === itemDia && s.mes === itemMes &&
-                    (itemAnio === null || s.anio === itemAnio)
-                );
-            });
-
-            if (data.length === 0) {
-                showEmptyState(
-                    '📭 Sin actividades en esas fechas',
-                    'No hay tareas registradas para los días seleccionados.'
-                );
-                return;
-            }
-        }
-
-        if (data.length === 0) {
-            showEmptyState('📭 Agenda vacía', 'Ejecuta el scraper para cargar la agenda real de Edukar360.');
-            return;
-        }
-
-        grid.innerHTML = '';
-        data.forEach((item, index) => {
-            const color = categoryColors[item.categoria] || '#6366f1';
-            const delay = index * 0.1;
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.style.setProperty('--cat-color', color);
-            card.style.animationDelay = delay + 's';
-            card.innerHTML = `
-                <span class="badge" style="--cat-color: ${color}">${item.categoria}</span>
-                <div class="card-resumen">${item.resumen}</div>
-                <div class="card-detalle">${item.detalle}</div>
-                <div class="card-footer">
-                    <span>📅 ${item.fecha}</span>
-                    <span># Edukar360</span>
-                </div>
-            `;
-            grid.appendChild(card);
+    // Filtrar por fechas si hay días seleccionados
+    if (filterDates && filterDates.length > 0) {
+        var selSet = filterDates.map(function (fd) {
+            var parts = fd.split('-');
+            return { anio: parseInt(parts[0]), mes: parseInt(parts[1]), dia: parseInt(parts[2]) };
         });
 
-    } catch (error) {
-        console.error(error);
-        showEmptyState('Error al cargar datos', 'Ejecuta el scraper primero.');
+        data = data.filter(function (item) {
+            if (!item.fecha) return false;
+            var nums = item.fecha.match(/\d+/g);
+            if (!nums || nums.length < 2) return false;
+            var itemDia = parseInt(nums[0]);
+            var itemMes = parseInt(nums[1]);
+            var itemAnio = nums[2] ? parseInt(nums[2]) : null;
+            return selSet.some(function (s) {
+                return s.dia === itemDia && s.mes === itemMes &&
+                    (itemAnio === null || s.anio === itemAnio);
+            });
+        });
+
+        if (data.length === 0) {
+            showEmptyState('📭 Sin actividades en esas fechas',
+                'Selecciona otros días o presiona Actualizar sin selección para ver todo.');
+            return;
+        }
+    }
+
+    if (data.length === 0) {
+        showEmptyState('📭 Agenda vacía',
+            'Ejecuta el scraper para cargar la agenda real de Edukar360.');
+        return;
+    }
+
+    grid.innerHTML = '';
+    for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var color = categoryColors[item.categoria] || '#6366f1';
+        var card = document.createElement('div');
+        card.className = 'card';
+        card.style.setProperty('--cat-color', color);
+        card.style.animationDelay = (i * 0.1) + 's';
+        card.innerHTML =
+            '<span class="badge" style="--cat-color:' + color + '">' + item.categoria + '</span>' +
+            '<div class="card-resumen">' + item.resumen + '</div>' +
+            '<div class="card-detalle">' + item.detalle + '</div>' +
+            '<div class="card-footer">' +
+            '  <span>📅 ' + item.fecha + '</span>' +
+            '  <span># Edukar360</span>' +
+            '</div>';
+        grid.appendChild(card);
     }
 }
 
 function showEmptyState(title, message) {
-    const grid = document.getElementById('agenda-grid');
-    grid.innerHTML = `
-        <div class="empty-state">
-            <h2>${title}</h2>
-            <p>${message || ''}</p>
-        </div>
-    `;
+    var grid = document.getElementById('agenda-grid');
+    grid.innerHTML =
+        '<div class="empty-state">' +
+        '  <h2>' + title + '</h2>' +
+        '  <p>' + (message || '') + '</p>' +
+        '</div>';
 }
 
 // ── Mini Calendario ──
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+var MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-
 var calYear = new Date().getFullYear();
-var calMonth = new Date().getMonth(); // 0-11
+var calMonth = new Date().getMonth();
 var selDays = new Set();
 
 function buildCalendar() {
     var grid = document.getElementById('cal-grid');
     var label = document.getElementById('cal-month-label');
-    if (!grid || !label) { return; }
+    if (!grid || !label) return;
 
     label.textContent = MESES[calMonth] + ' ' + calYear;
     grid.innerHTML = '';
@@ -130,9 +112,9 @@ function buildCalendar() {
         cell.className = 'cal-day';
         cell.textContent = d;
 
-        var key = calYear + '-'
-            + String(calMonth + 1).padStart(2, '0') + '-'
-            + String(d).padStart(2, '0');
+        var key = calYear + '-' +
+            String(calMonth + 1).padStart(2, '0') + '-' +
+            String(d).padStart(2, '0');
 
         if (selDays.has(key)) cell.classList.add('selected');
         if (d === todayD && calMonth === todayM && calYear === todayY)
@@ -174,7 +156,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var btnPrev = document.getElementById('cal-prev');
     var btnNext = document.getElementById('cal-next');
-
     if (btnPrev) btnPrev.addEventListener('click', function () {
         calMonth--;
         if (calMonth < 0) { calMonth = 11; calYear--; }

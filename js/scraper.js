@@ -183,9 +183,17 @@ async function runScraper() {
         const jsonDir = path.join(projectRoot, 'json');
         if (!fs.existsSync(jsonDir)) fs.mkdirSync(jsonDir);
 
+        // Guardar como JSON (para APIs y GitHub Actions)
         const outputPath = path.join(jsonDir, 'agenda_resultado.json');
         fs.writeFileSync(outputPath, JSON.stringify(allAgendaData, null, 2));
+
+        // Guardar como JS (para el visualizador local)
+        const jsContent = '// Generado automáticamente por el scraper\nvar agendaData = ' + JSON.stringify(allAgendaData, null, 2) + ';\n';
+        const jsPath = path.join(jsonDir, 'agenda_data.js');
+        fs.writeFileSync(jsPath, jsContent);
+
         console.log(`\n💾 Resultados guardados en: ${outputPath}`);
+        console.log(`💾 Datos JS guardados en: ${jsPath}`);
         console.table(allAgendaData.map(i => ({ Categoria: i.categoria, Resumen: i.resumen.substring(0, 40) })));
 
     } catch (error) {
