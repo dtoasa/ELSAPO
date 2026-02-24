@@ -20,11 +20,11 @@ Este es un scraper automatizado diseñado para extraer información académica d
 
 ## 🛠️ Configuración
 1. Edita el archivo `.env` dentro de la carpeta **`CL/`**.
-2. Ingresa tu usuario y contraseña:
+2. Ingresa solo tu **usuario**:
    ```env
    USER_EDUKAR=tu_usuario
-   PASS_EDUKAR=tu_password
    ```
+   *Nota: Por seguridad, la contraseña NO se guarda. El script te la pedirá cada vez que lo inicies.*
 
 ## 🏃‍♂️ Ejecución
 Para iniciar el scraping, ejecuta desde la raíz:

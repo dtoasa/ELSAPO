@@ -1,24 +1,71 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 require('dotenv').config({ path: path.join(__dirname, '..', 'CL', '.env') });
 
 /**
- * Edukar360 Agenda Scraper
- * Extracts: Tareas, Agenda, Deberes, Lecciones, Exámenes, Aportes, Talleres, Proyectos.
+ * Función para solicitar entrada por consola
  */
+function askQuestion(query, silent = false) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
 
+    return new Promise(resolve => {
+        if (silent) {
+            // Truco para ocultar la contraseña en la terminal
+            process.stdout.write(query);
+            const stdin = process.openStdin();
+            process.stdin.on('data', char => {
+                char = char + '';
+                switch (char) {
+                    case '\n':
+                    case '\r':
+                    case '\u0004':
+                        stdin.pause();
+                        break;
+                    default:
+                        process.stdout.clearLine();
+                        readline.cursorTo(process.stdout, 0);
+                        process.stdout.write(query + Array(rl.line.length + 1).join('*'));
+                        break;
+                }
+            });
+        }
+
+        rl.question(query, answer => {
+            rl.close();
+            resolve(answer);
+        });
+    });
+}
+
+/**
+ * Edukar360 Agenda Scraper
+ */
 async function runScraper() {
     console.log('🚀 Iniciando Scraper de Edukar360...');
 
-    // Validar credenciales
-    if (!process.env.USER_EDUKAR || !process.env.PASS_EDUKAR) {
-        console.error('❌ Error: Falta USER_EDUKAR o PASS_EDUKAR en el archivo .env');
+    // 0. Obtener Credenciales de forma interactiva
+    let user = process.env.USER_EDUKAR;
+    if (!user || user === 'your_username') {
+        user = await askQuestion('👤 Ingrese su usuario de Edukar360: ');
+    } else {
+        console.log(`👤 Usando usuario: ${user}`);
+    }
+
+    // Siempre pedir la contraseña y no guardarla
+    const pass = await askQuestion('🔑 Ingrese su contraseña: ');
+
+    if (!user || !pass) {
+        console.error('❌ Error: Usuario y contraseña son obligatorios.');
         process.exit(1);
     }
 
     const browser = await puppeteer.launch({
-        headless: false, // Cambiar a true si no quieres ver el navegador
+        headless: false,
         defaultViewport: { width: 1280, height: 800 },
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
@@ -26,41 +73,30 @@ async function runScraper() {
     const page = await browser.newPage();
 
     try {
-        // 1. Navegar al Login
         console.log('🔗 Navegando a la página de login...');
         await page.goto('https://novus.edukar360.com/extranet/portalpad/login', {
             waitUntil: 'networkidle2',
             timeout: 60000
         });
 
-        // 2. Proceso de Login
-        // Nota: Los selectores exactos pueden variar según la versión del portal.
-        // Se intentan selectores comunes.
-        console.log('🔑 Ingresando credenciales...');
-
-        // Esperar a que el formulario cargue
+        console.log('🔑 Ingresando credenciales en el portal...');
         await page.waitForSelector('input', { timeout: 10000 });
 
-        // Identificar campos por name, placeholder o tipo
-        await page.type('input[type="text"]', process.env.USER_EDUKAR);
-        await page.type('input[type="password"]', process.env.PASS_EDUKAR);
+        await page.type('input[type="text"]', user);
+        await page.type('input[type="password"]', pass);
 
-        // Hacer clic en entrar (usualmente es el primer botón de submit)
         await Promise.all([
             page.click('button[type="submit"]'),
             page.waitForNavigation({ waitUntil: 'networkidle2' })
         ]);
 
+        if (page.url().includes('login')) {
+            throw new Error('No se pudo iniciar sesión. Verifique sus credenciales.');
+        }
+
         console.log('✅ Login exitoso.');
 
-        // 3. Navegar a la Agenda
-        // Edukar360 suele tener una URL específica para la agenda o un enlace en el sidebar
         console.log('📅 Buscando sección de Agenda...');
-
-        // Si conocemos la URL directa, es más rápido:
-        // await page.goto('https://novus.edukar360.com/extranet/portalpad/agenda', { waitUntil: 'networkidle2' });
-
-        // Si no, buscamos el enlace en el menú
         const agendaLink = await page.evaluate(() => {
             const links = Array.from(document.querySelectorAll('a'));
             return links.find(l => l.innerText.toLowerCase().includes('agenda'))?.href;
@@ -69,56 +105,76 @@ async function runScraper() {
         if (agendaLink) {
             await page.goto(agendaLink, { waitUntil: 'networkidle2' });
         } else {
-            console.log('⚠️ No se encontró link directo a "Agenda", buscando en el menú principal...');
+            console.log('⚠️ No se encontró link directo a "Agenda", buscando en el menú...');
         }
 
-        // 4. Extracción de Datos
-        console.log('🔍 Extrayendo información académica...');
+        // Función para extraer datos de la página actual
+        async function extractTableData() {
+            return await page.evaluate(() => {
+                const items = [];
+                const categories = ['tarea', 'agenda', 'deberes', 'lecciones', 'examen', 'aporte', 'taller', 'proyecto'];
+                const rows = document.querySelectorAll('tr, .agenda-item, .card, .list-group-item, .event-container');
+                const dateRegex = /(\d{1,2})[\/\- ]?(\d{1,2}|ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[\/\- ]?(\d{2,4})?/i;
 
-        const agendaData = await page.evaluate(() => {
-            const items = [];
-            const categories = ['tarea', 'agenda', 'deberes', 'lecciones', 'examen', 'aporte', 'taller', 'proyecto'];
+                rows.forEach(row => {
+                    const text = row.innerText.trim();
+                    const lowerText = text.toLowerCase();
+                    const matchedCategory = categories.find(cat => lowerText.includes(cat));
 
-            // Buscamos en elementos que suelen contener tareas (ej: tablas, cards, list-items)
-            // Esto es genérico y debe ajustarse según el DOM real
-            const rows = document.querySelectorAll('tr, .agenda-item, .card, .list-group-item');
+                    if (matchedCategory) {
+                        const dateMatch = text.match(dateRegex);
+                        let detectedDate = new Date().toLocaleDateString();
+                        if (dateMatch) detectedDate = dateMatch[0];
 
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                const matchedCategory = categories.find(cat => text.includes(cat));
-
-                if (matchedCategory) {
-                    items.push({
-                        categoria: matchedCategory.toUpperCase(),
-                        resumen: row.innerText.trim().split('\n')[0], // Primera línea como título
-                        detalle: row.innerText.trim(),
-                        fecha: new Date().toLocaleDateString(), // Por defecto hoy
-                        timestamp: Date.now()
-                    });
-                }
+                        items.push({
+                            categoria: matchedCategory.toUpperCase(),
+                            resumen: text.split('\n')[0].substring(0, 100),
+                            detalle: text,
+                            fecha: detectedDate,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+                return items;
             });
+        }
 
-            return items;
+        let allAgendaData = await extractTableData();
+
+        // 5. Intentar navegar a días/meses futuros si existe un botón de "Siguiente" o "Próximo"
+        console.log('⏭️ Buscando controles para fechas futuras...');
+        const hasNextButton = await page.evaluate(() => {
+            const btn = Array.from(document.querySelectorAll('button, a, .fc-next-button'))
+                .find(el => el.innerText.toLowerCase().includes('sig') || el.classList.contains('fc-next-button'));
+            if (btn) {
+                btn.click();
+                return true;
+            }
+            return false;
         });
 
-        console.log(`📊 Se encontraron ${agendaData.length} elementos relevantes.`);
+        if (hasNextButton) {
+            console.log('⏳ Cargando mes/semana siguiente...');
+            await new Promise(r => setTimeout(r, 3000)); // Esperar carga
+            const futureData = await extractTableData();
+            allAgendaData = [...allAgendaData, ...futureData];
+            console.log(`➕ Se agregaron ${futureData.length} elementos de fechas futuras.`);
+        }
 
-        // 5. Guardar resultados
-        // Al estar el script en /js, el root es ..
+        console.log(`📊 Total recolectado: ${allAgendaData.length} elementos.`);
+
         const projectRoot = path.join(__dirname, '..');
         const jsonDir = path.join(projectRoot, 'json');
         if (!fs.existsSync(jsonDir)) fs.mkdirSync(jsonDir);
 
         const outputPath = path.join(jsonDir, 'agenda_resultado.json');
-        fs.writeFileSync(outputPath, JSON.stringify(agendaData, null, 2));
+        fs.writeFileSync(outputPath, JSON.stringify(allAgendaData, null, 2));
         console.log(`💾 Resultados guardados en: ${outputPath}`);
 
-        // Mostrar un resumen en consola
-        console.table(agendaData.map(i => ({ Categoria: i.categoria, Resumen: i.resumen.substring(0, 50) })));
+        console.table(allAgendaData.map(i => ({ Categoria: i.categoria, Resumen: i.resumen.substring(0, 50) })));
 
     } catch (error) {
         console.error('❌ Error durante el proceso:', error.message);
-        // Generar screenshot del error para debugging
         await page.screenshot({ path: 'error_screenshot.png' });
         console.log('📸 Screenshot del error guardada como error_screenshot.png');
     } finally {
