@@ -71,7 +71,7 @@ async function runScraper() {
     }
 
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: isAutomated ? true : false,
         defaultViewport: { width: 1280, height: 800 },
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
