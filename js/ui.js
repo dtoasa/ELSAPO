@@ -169,14 +169,79 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var loginForm = document.getElementById('login-form');
     var loginOverlay = document.getElementById('login-overlay');
+    var loginAttempts = 0;
+    var maxAttempts = 5;
+
     if (loginForm) {
+        // Crear elemento de error si no existe
+        var errorMsg = document.createElement('div');
+        errorMsg.id = 'login-error';
+        errorMsg.style.cssText = 'color:#f43f5e;font-size:0.85rem;text-align:center;margin-top:12px;min-height:20px;transition:opacity 0.3s;opacity:0;';
+        loginForm.appendChild(errorMsg);
+
         loginForm.onsubmit = function (e) {
             e.preventDefault();
-            var user = document.getElementById('student-user').value;
+
+            // Verificar si está bloqueado por intentos
+            if (loginAttempts >= maxAttempts) {
+                errorMsg.textContent = '🔒 Demasiados intentos. Espera 30 segundos...';
+                errorMsg.style.opacity = '1';
+                return;
+            }
+
+            var user = document.getElementById('student-user').value.trim();
             var pass = document.getElementById('student-pass').value;
-            if (user && pass) {
+
+            if (!user || !pass) {
+                errorMsg.textContent = '⚠️ Completa todos los campos.';
+                errorMsg.style.opacity = '1';
+                return;
+            }
+
+            // Validar contra las credenciales de CL/auth.js
+            var validUser = (typeof authUser !== 'undefined') ? authUser : '';
+            var validPass = (typeof authPass !== 'undefined') ? authPass : '';
+
+            if (user === validUser && pass === validPass) {
+                // ✅ Login exitoso
+                errorMsg.style.opacity = '0';
                 loginOverlay.classList.add('hidden');
                 loadData(null);
+            } else {
+                // ❌ Credenciales incorrectas
+                loginAttempts++;
+                var remaining = maxAttempts - loginAttempts;
+                errorMsg.textContent = '❌ Usuario o contraseña incorrectos. (' + remaining + ' intentos restantes)';
+                errorMsg.style.opacity = '1';
+
+                // Animación shake en la card
+                var card = loginForm.closest('.card');
+                if (card) {
+                    card.style.animation = 'none';
+                    card.offsetHeight; // trigger reflow
+                    card.style.animation = 'shake 0.5s ease-in-out';
+                }
+
+                // Bloqueo temporal si alcanza el límite
+                if (loginAttempts >= maxAttempts) {
+                    var btnLogin = loginForm.querySelector('.btn-login');
+                    if (btnLogin) {
+                        btnLogin.disabled = true;
+                        btnLogin.style.opacity = '0.5';
+                        btnLogin.style.cursor = 'not-allowed';
+                    }
+                    errorMsg.textContent = '🔒 Bloqueado por 30 segundos...';
+                    setTimeout(function () {
+                        loginAttempts = 0;
+                        errorMsg.textContent = '';
+                        errorMsg.style.opacity = '0';
+                        if (btnLogin) {
+                            btnLogin.disabled = false;
+                            btnLogin.style.opacity = '1';
+                            btnLogin.style.cursor = 'pointer';
+                        }
+                    }, 30000);
+                }
             }
         };
     }
