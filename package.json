@@ -1,13 +1,18 @@
 {
-    "name": "edukar360-scraper",
-    "version": "1.0.0",
-    "description": "Scraper automático de agenda Edukar360",
-    "main": "js/scraper.js",
+    "name": "edukar360-scraper-unified",
+    "version": "1.1.0",
+    "description": "Scraper automático de agenda Edukar360 unificado con EduTrack",
+    "main": "scraper.js",
     "scripts": {
-        "scrape": "node js/scraper.js"
+        "scrape": "node scraper.js",
+        "start-server": "node server.js"
     },
     "dependencies": {
-        "puppeteer": "^22.0.0",
-        "dotenv": "^16.0.0"
+        "cors": "^2.8.6",
+        "dotenv": "^16.0.0",
+        "express": "^4.22.1",
+        "firebase-admin": "^11.0.0",
+        "playwright": "^1.58.2",
+        "puppeteer": "^22.0.0"
     }
 }
