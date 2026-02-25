@@ -1,52 +1,38 @@
-# 🎓 Edukar360 Scraper Premium
+# EduTrack + Scraper Edukar360 (Unificado)
 
-Este es un scraper automatizado diseñado para extraer información académica del portal **Edukar360**.
+Este proyecto une el sistema de gestión de tareas escolar con el motor de scraping de Edukar360.
 
-## ✨ Características
-- **Categorización Automática**: Filtra específicamente por Tareas, Agenda, Deberes, Lecciones, Exámenes, Aportes, Talleres y Proyectos.
-- **Robustez**: Manejo de errores con capturas de pantalla automáticas en caso de fallo.
-- **Seguridad**: Uso de variables de entorno para proteger las credenciales.
-- **Exportación**: Genera un archivo `agenda_resultado.json` con toda la data limpia.
+## Estructura
+- `/` - Contiene la aplicación web (index.html, admin.html, student.html).
+- `/css/` - Estilos globales.
+- `/js/` - Lógica de Firebase para el frontend.
+- `/backend_scraper/` - El motor Node.js que extrae tareas de Edukar360.
 
-## 🚀 Requisitos
-1. **Node.js**: Asegúrate de tener Node.js instalado.
-2. **Dependencias**:
-   Para descargar las dependencias (dentro de la carpeta `json`):
+## Cómo usar
+
+### 1. Aplicación Web
+Simplemente abre `index.html` en un navegador (o usa una extensión de Live Server en VS Code).
+- Usa el panel de **Admin** para crear tareas manualmente.
+- Usa el panel de **Estudiante** para ver tus tareas.
+
+### 2. Scraper (Obtener tareas reales)
+Para traer las tareas automáticamente de Edukar360:
+1. Asegúrate de tener **Node.js** instalado.
+2. Entra a la carpeta `backend_scraper`:
    ```bash
-   cd json
+   cd backend_scraper
+   ```
+3. Instala las dependencias:
+   ```bash
    npm install
-   cd ..
+   ```
+4. Configura tus credenciales en el archivo `.env`.
+5. Ejecuta el scraper:
+   ```bash
+   npm run scrape
    ```
 
-## 🛠️ Configuración
-1. Edita el archivo `.env` dentro de la carpeta **`CL/`**.
-2. Ingresa tus usuarios (opcional):
-   ```env
-   USER_PADRE=tu_usuario_dni
-   USER_ALUMNO=tu_usuario_estudiante
-   ```
-   *Nota: Por seguridad, las contraseñas NO se guardan. El script te las pedirá según el portal que elijas.*
-
-## 🏃‍♂️ Ejecución
-Para iniciar el scraping, ejecuta desde la raíz:
-```bash
-node js/scraper.js
-```
-El script te preguntará si deseas ingresar al portal de **Padres** o de **Estudiantes**.
-
-## 📂 Salida
-Los datos se guardarán en `json/agenda_resultado.json`.
-```json
-[
-  {
-    "categoria": "TAREA",
-    "resumen": "Título de la tarea...",
-    "detalle": "Texto completo contenido en el elemento...",
-    "fecha": "24/02/2026",
-    "timestamp": 1740412674000
-  }
-]
-```
+Los resultados se guardarán en `backend_scraper/data/agenda_resultado.json`.
 
 ---
-*Nota: Dado que el DOM de los portales educativos puede cambiar, es posible que se requieran ajustes menores en los selectores de `scraper.js`.*
+*Nota: Próximamente se habilitará la sincronización automática directa a la base de datos Firebase.*

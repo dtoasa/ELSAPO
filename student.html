@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tareas - EduTrack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+
+<body>
+    <nav>
+        <a href="index.html" class="logo">EduTrack</a>
+        <div id="nav-user-info" style="display: flex; align-items: center; gap: 20px;">
+            <span id="user-display-name">Alumno</span>
+            <button class="btn btn-primary" onclick="auth.signOut().then(() => window.location.href='index.html')"
+                style="padding: 8px 16px;">Salir</button>
+        </div>
+    </nav>
+
+    <main style="padding: 40px 5%;">
+        <div id="school-tasks-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                <div>
+                    <h2 id="welcome-text">Mis Tareas Escolares</h2>
+                    <p style="color: var(--text-muted);">Aquí puedes ver y marcar tus tareas como completadas</p>
+                </div>
+                <div id="stats-summary" class="glass-card" style="padding: 12px 24px; font-weight: 600;">
+                    Pendientes: <span id="pending-count" style="color: var(--secondary);">0</span>
+                </div>
+            </div>
+
+            <div id="student-tasks-grid" class="dashboard-grid">
+                <!-- Dynamic tasks -->
+            </div>
+        </div>
+
+        <!-- ── NUEVA SECCIÓN: Agenda Edukar360 con Calendario ── -->
+        <div id="edukar-agenda-section"
+            style="margin-top: 60px; border-top: 1px dashed var(--glass-border); padding-top: 40px;">
+            <header style="text-align: center; margin-bottom: 40px;">
+                <h2>Agenda Académica Edukar360</h2>
+                <p style="color: var(--text-muted);">Consulta las actividades extraídas automáticamente</p>
+            </header>
+
+            <!-- BOTÓN DEL SCRAPER EXPRESS -->
+            <div style="max-width: 400px; margin: 0 auto 40px auto; text-align: center;">
+                <button onclick="startScraping()" id="run-scraper-btn" class="btn"
+                    style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 15px; font-size: 1rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                    🚀 Actualizar Datos de Edukar360 (Scraper)
+                </button>
+                <div id="scraper-log" class="scraper-console"></div>
+            </div>
+
+            <div class="controls">
+                <div class="calendar-widget">
+                    <div class="cal-header">
+                        <button id="cal-prev" class="cal-nav" type="button">&#8249;</button>
+                        <strong id="cal-month-label">Cargando...</strong>
+                        <button id="cal-next" class="cal-nav" type="button">&#8250;</button>
+                    </div>
+                    <div class="cal-weekdays">
+                        <span>Lu</span><span>Ma</span><span>Mi</span>
+                        <span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+                    </div>
+                    <div id="cal-grid" class="cal-grid"></div>
+                    <div class="cal-selected-info">
+                        <span id="selected-dates-label">Ningún día seleccionado</span>
+                    </div>
+                </div>
+                <button class="btn-refresh" type="button" onclick="loadDataForDates()">
+                    📅 Filtrar por Selección
+                </button>
+            </div>
+
+            <div id="agenda-grid" class="grid">
+                <div class="empty-state">
+                    <h3>Inicia el scraper para ver datos</h3>
+                    <p>Las actividades sincronizadas desde Edukar360 aparecerán aquí.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/student.js"></script>
+    <!-- Scripts para el Mini Calendario y Agenda Scraping -->
+    <script src="backend_scraper/CL/auth_hash.js"></script>
+    <script src="backend_scraper/js/agenda_data.js"></script>
+    <script>
+        console.log("Verificando agendaData en el HTML:", typeof agendaData !== 'undefined' ? "Cargado ✅" : "No encontrado ❌");
+        if (typeof agendaData !== 'undefined') console.log("Registros iniciales:", agendaData.length);
+    </script>
+    <script src="backend_scraper/js/ui.js"></script>
+</body>
+
+</html>

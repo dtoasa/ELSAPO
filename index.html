@@ -1,85 +1,56 @@
+Lo sentimos, pero no encontramos la página que buscas.
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Agenda - Edukar360</title>
-    <!-- Fonts -->
+    <title>EduTrack - Seguimiento de Tareas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <!-- Estilos Externos -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 </head>
 
 <body>
+    <nav>
+        <a href="index.html" class="logo">EduTrack</a>
+        <div id="nav-auth-buttons">
+            <!-- Dynamic buttons -->
+        </div>
+    </nav>
 
-    <!-- Login Overlay -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="card"
-            style="--cat-color: var(--primary); width:90%; max-width:380px; animation: fadeInUp 0.6s ease-out both;">
-            <span class="badge" style="--cat-color: var(--primary)">PORTAL ESTUDIANTE</span>
-            <div class="card-resumen">Agenda Académica Edukar360</div>
-            <form id="login-form" style="margin-top: 18px;">
-                <div class="input-group">
-                    <label for="student-user">Usuario Edukar360</label>
-                    <input type="text" id="student-user" placeholder="DNI o Código" required>
-                </div>
-                <div class="input-group">
-                    <label for="student-pass">Contraseña</label>
-                    <input type="password" id="student-pass" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="btn-login">Ingresar a la Agenda</button>
-            </form>
-            <div class="card-footer" style="margin-top: 18px;">
-                <span>🔒 Acceso seguro al portal académico</span>
-                <span># Edukar360</span>
+    <main class="animate-fade-in">
+        <div class="auth-container glass-card">
+            <h2 id="auth-title">Panel de Control</h2>
+            <p id="auth-subtitle" style="margin-bottom: 24px; color: var(--text-muted);">Gestiona y sincroniza tus
+                tareas escolares</p>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                <a href="student.html" class="btn"
+                    style="flex: 1; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); color: var(--text);">🎓
+                    Ver Estudiante</a>
+                <a href="admin.html" class="btn"
+                    style="flex: 1; background: rgba(236, 72, 153, 0.1); border: 1px solid var(--secondary); color: var(--text);">🛠️
+                    Ir a Admin</a>
+            </div>
+
+            <!-- Botón de Scraper (Abierto para acceso directo) -->
+            <div id="scraper-control" style="border-top: 1px solid var(--glass-border); padding-top: 10px;">
+                <button onclick="startScraping()" id="run-scraper-btn" class="btn"
+                    style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; margin-top: 10px;">
+                    🔄 Sincronizar con Edukar360
+                </button>
+                <div id="scraper-log" class="scraper-console"></div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="container">
-        <header>
-            <h1>Agenda Académica</h1>
-            <p class="subtitle">Visualizando datos extraídos de Edukar360</p>
-        </header>
-
-        <div class="controls">
-            <!-- Mini Calendario -->
-            <div class="calendar-widget">
-                <div class="cal-header">
-                    <button id="cal-prev" class="cal-nav" type="button">&#8249;</button>
-                    <strong id="cal-month-label">cargando...</strong>
-                    <button id="cal-next" class="cal-nav" type="button">&#8250;</button>
-                </div>
-                <div class="cal-weekdays">
-                    <span>Lu</span><span>Ma</span><span>Mi</span>
-                    <span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
-                </div>
-                <div id="cal-grid" class="cal-grid"></div>
-                <div class="cal-selected-info">
-                    <span id="selected-dates-label">Ningún día seleccionado</span>
-                </div>
-            </div>
-            <button class="btn-refresh" type="button" onclick="loadDataForDates()">
-                &#128260; Actualizar Vista
-            </button>
-        </div>
-
-        <div id="agenda-grid" class="grid">
-            <!-- Las tareas se cargarán vía JS -->
-            <div class="empty-state">
-                <h2>Cargando datos...</h2>
-                <p>Iniciando conexión con el almacén de datos.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts Externos -->
-    <script src="CL/auth.js?v=2"></script>
-    <script src="json/agenda_data.js?v=2"></script>
-    <script src="js/ui.js?v=2"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 
 </html>

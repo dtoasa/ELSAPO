@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - EduTrack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+
+<body>
+    <nav>
+        <a href="index.html" class="logo">EduTrack Admin</a>
+        <div id="nav-user-info" style="display: flex; align-items: center; gap: 20px;">
+            <span id="user-display-name">Administrador</span>
+            <button class="btn btn-primary" onclick="auth.signOut().then(() => window.location.href='index.html')"
+                style="padding: 8px 16px;">Salir</button>
+        </div>
+    </nav>
+
+    <main>
+        <div class="admin-form glass-card animate-fade-in">
+            <h3>Nueva Tarea Escolar</h3>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">Asigna tareas a los alumnos</p>
+
+            <form id="task-form">
+                <input type="text" id="task-title" class="input-field" placeholder="Título de la tarea" required
+                    style="margin-bottom: 16px;">
+                <textarea id="task-desc" class="input-field" placeholder="Descripción detallada"
+                    style="margin-bottom: 16px; min-height: 100px; resize: vertical;"></textarea>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Materia</label>
+                        <input type="text" id="task-subject" class="input-field" placeholder="Ej: Matemáticas">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Fecha de Entrega</label>
+                        <input type="date" id="task-deadline" class="input-field">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Archivo Adjunto (Imagen o
+                        PDF)</label>
+                    <input type="file" id="task-file" class="input-field" accept="image/*,.pdf">
+                    <div id="upload-progress-container" style="display: none; margin-top: 10px;">
+                        <div
+                            style="width: 100%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                            <div id="upload-bar"
+                                style="width: 0%; height: 100%; background: var(--success); transition: width 0.3s;">
+                            </div>
+                        </div>
+                        <span id="upload-status" style="font-size: 0.7rem; color: var(--text-muted);">Subiendo...</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Asignar a:</label>
+                    <select id="task-assignee" class="input-field">
+                        <option value="all">Todos los alumnos</option>
+                        <!-- Dynamic options will be added here -->
+                    </select>
+                </div>
+
+                <button type="submit" id="submit-task-btn" class="btn btn-primary" style="width: 100%;">
+                    Publicar Tarea
+                </button>
+            </form>
+        </div>
+
+        <div style="padding: 0 5%; margin-bottom: 40px;">
+            <h3 style="margin-bottom: 20px;">Seguimiento de Alumnos</h3>
+            <div id="students-progress-list" class="dashboard-grid">
+                <!-- Se llenará con el progreso de cada alumno -->
+            </div>
+        </div>
+
+        <div style="padding: 0 5%;">
+            <h3 style="margin-bottom: 20px;">Todas las Tareas Publicadas</h3>
+            <div id="admin-tasks-grid" class="dashboard-grid">
+                <!-- Dynamic tasks -->
+            </div>
+        </div>
+    </main>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>
